@@ -1,21 +1,6 @@
-
 import mongoose from 'mongoose';
 
-export interface IDevice {
-  deviceId: string;
-  name: string;
-  type: string;
-  location: string;
-  active: boolean;
-  lastMaintenance: Date;
-  installDate: Date;
-  ipAddress?: string;
-  firmwareVersion?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-const DeviceSchema = new mongoose.Schema<IDevice>({
+const DeviceSchema = new mongoose.Schema({
   deviceId: {
     type: String,
     required: true,
@@ -53,4 +38,4 @@ const DeviceSchema = new mongoose.Schema<IDevice>({
   }
 }, { timestamps: true });
 
-export default mongoose.model<IDevice>('Device', DeviceSchema);
+export default mongoose.model('Device', DeviceSchema);

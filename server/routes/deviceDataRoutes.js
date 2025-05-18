@@ -5,7 +5,7 @@ import {
   getLatestDeviceData,
   getAllLatestDeviceData,
   getDeviceDataHistory
-} from '../controllers/deviceDataController';
+} from '../controllers/deviceDataController.js';
 
 const router = express.Router();
 
@@ -15,3 +15,5 @@ router.get('/latest/:deviceId', getLatestDeviceData);
 router.get('/history/:deviceId', getDeviceDataHistory);
 
 export default router;
+
+

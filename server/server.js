@@ -3,13 +3,14 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import connectDB from './config/db';
-import deviceRoutes from './routes/deviceRoutes';
-import deviceDataRoutes from './routes/deviceDataRoutes';
-import { notFound, errorHandler } from './middleware/errorMiddleware';
+import connectDB from './config/db.js';
+import deviceRoutes from './routes/deviceRoutes.js';
+import deviceDataRoutes from './routes/deviceDataRoutes.js';
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import path from 'path';
 
-dotenv.config();
+// Explicitly load .env from the root folder
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Connect to MongoDB
 connectDB();
@@ -21,6 +22,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('Welcome to IoT Sense Nexus API. Use /api/devices, /api/data etc.');
+});
+
 app.use('/api/devices', deviceRoutes);
 app.use('/api/data', deviceDataRoutes);
 

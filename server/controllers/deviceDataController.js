@@ -1,10 +1,8 @@
-
-import { Request, Response } from 'express';
-import DeviceData, { IDeviceData } from '../models/DeviceData';
-import Device from '../models/Device';
+import DeviceData from '../models/DeviceData.js';
+import Device from '../models/Device.js';
 
 // Create new device data
-export const createDeviceData = async (req: Request, res: Response): Promise<void> => {
+export const createDeviceData = async (req, res) => {
   try {
     const { deviceId } = req.body;
     
@@ -26,7 +24,7 @@ export const createDeviceData = async (req: Request, res: Response): Promise<voi
 };
 
 // Get latest data for a specific device
-export const getLatestDeviceData = async (req: Request, res: Response): Promise<void> => {
+export const getLatestDeviceData = async (req, res) => {
   try {
     const { deviceId } = req.params;
     
@@ -46,7 +44,7 @@ export const getLatestDeviceData = async (req: Request, res: Response): Promise<
 };
 
 // Get latest data for all devices
-export const getAllLatestDeviceData = async (req: Request, res: Response): Promise<void> => {
+export const getAllLatestDeviceData = async (req, res) => {
   try {
     // Get all devices
     const devices = await Device.find({}, { deviceId: 1 });
@@ -72,17 +70,17 @@ export const getAllLatestDeviceData = async (req: Request, res: Response): Promi
 };
 
 // Get historical data for a device
-export const getDeviceDataHistory = async (req: Request, res: Response): Promise<void> => {
+export const getDeviceDataHistory = async (req, res) => {
   try {
     const { deviceId } = req.params;
     const { limit = 100, startDate, endDate } = req.query;
     
-    const query: any = { deviceId };
+    const query = { deviceId };
     
     if (startDate && endDate) {
       query.timestamp = {
-        $gte: new Date(startDate as string),
-        $lte: new Date(endDate as string)
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
       };
     }
     

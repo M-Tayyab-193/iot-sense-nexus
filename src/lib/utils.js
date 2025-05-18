@@ -1,6 +1,10 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx } from "clsx";
+// No `type ClassValue` import in JS files
+import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+/**
+ * @param {...any[]} inputs
+ */
+export function cn(...inputs) {
+  return twMerge(clsx(inputs));
 }

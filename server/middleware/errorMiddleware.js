@@ -1,15 +1,12 @@
-
-import { Request, Response, NextFunction } from 'express';
-
 // Not Found Middleware
-export const notFound = (req: Request, res: Response, next: NextFunction): void => {
+export const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
   next(error);
 };
 
 // Error Handler Middleware
-export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction): void => {
+export const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   
   res.status(statusCode).json({
