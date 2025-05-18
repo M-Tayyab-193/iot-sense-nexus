@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express';
-import Device from '../models/Device';
+import Device, { IDevice } from '../models/Device';
 
 // Get all devices
 export const getDevices = async (req: Request, res: Response): Promise<void> => {

@@ -1,8 +1,27 @@
 
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 import { toast } from 'sonner';
 
-// Types
+// Base URL for the API
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : 'http://localhost:5000/api';
+
+export interface DeviceData {
+  _id: string;
+  deviceId: string;
+  temperature?: number;
+  humidity?: number;
+  waterLevel?: number;
+  lightIntensity?: number;
+  motionDetected?: boolean;
+  batteryLevel?: number;
+  timestamp: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Device {
   _id: string;
   deviceId: string;
@@ -12,230 +31,176 @@ export interface Device {
   active: boolean;
   lastMaintenance: string;
   installDate: string;
-  ipAddress: string;
-  firmwareVersion: string;
+  ipAddress?: string;
+  firmwareVersion?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface DeviceData {
-  _id: string;
-  deviceId: string;
-  temperature: number;
-  humidity: number;
-  waterLevel: number;
-  lightIntensity: number;
-  motionDetected: boolean;
-  batteryLevel: number;
-  timestamp: string;
-}
-
-interface DeviceContextProps {
+interface DeviceContextType {
   devices: Device[];
   deviceData: DeviceData[];
-  selectedDevice: string | null;
-  setSelectedDevice: (deviceId: string | null) => void;
+  historyData: DeviceData[];
+  selectedDevice: string;
   loading: boolean;
   error: string | null;
-  fetchDevices: () => Promise<void>;
-  fetchLatestData: () => Promise<void>;
+  setSelectedDevice: (deviceId: string) => void;
+  addDevice: (device: Omit<Device, '_id'>) => Promise<boolean>;
   addDeviceData: (data: Partial<DeviceData>) => Promise<boolean>;
-  addDevice: (data: Partial<Device>) => Promise<boolean>;
-  historyData: DeviceData[];
-  fetchDeviceHistory: (deviceId: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
-// API Base URL
-const API_URL = 'http://localhost:5000/api';
+const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
-// Create context
-const DeviceContext = createContext<DeviceContextProps | undefined>(undefined);
-
-// Provider component
 export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [deviceData, setDeviceData] = useState<DeviceData[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<DeviceData[]>([]);
-  
-  // Fetch all devices
-  const fetchDevices = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/devices`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch devices');
-      }
-      
-      const data = await response.json();
-      setDevices(data);
-      
-      // Set the first device as selected if none is selected
-      if (!selectedDevice && data.length > 0) {
-        setSelectedDevice(data[0].deviceId);
-      }
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error('Failed to fetch devices');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Fetch latest data for all devices
-  const fetchLatestData = async (): Promise<void> => {
-    try {
-      const response = await fetch(`${API_URL}/data/latest`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch latest data');
-      }
-      
-      const data = await response.json();
-      setDeviceData(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      console.error('Error fetching latest data:', err);
-    }
-  };
-  
-  // Fetch historical data for a device
-  const fetchDeviceHistory = async (deviceId: string): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/data/history/${deviceId}?limit=50`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch device history');
-      }
-      
-      const data = await response.json();
-      setHistoryData(data.reverse()); // Reverse to show oldest first
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error('Failed to fetch device history');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Add new device data
-  const addDeviceData = async (data: Partial<DeviceData>): Promise<boolean> => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add device data');
-      }
-      
-      toast.success('Device data added successfully');
-      fetchLatestData(); // Refresh data
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Add new device
-  const addDevice = async (data: Partial<Device>): Promise<boolean> => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/devices`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add device');
-      }
-      
-      toast.success('Device added successfully');
-      fetchDevices(); // Refresh devices
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Initial data fetch
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all devices on component mount
   useEffect(() => {
     fetchDevices();
-  }, []);
-  
-  // Set up polling for latest data
-  useEffect(() => {
-    fetchLatestData();
     
+    // Start polling for latest device data
     const interval = setInterval(() => {
       fetchLatestData();
     }, 5000); // Poll every 5 seconds
     
+    // Clean up interval on unmount
     return () => clearInterval(interval);
   }, []);
   
-  // Fetch device history when selected device changes
+  // Fetch history data when selected device changes
   useEffect(() => {
     if (selectedDevice) {
-      fetchDeviceHistory(selectedDevice);
+      fetchHistoryData(selectedDevice);
     }
   }, [selectedDevice]);
-  
-  const value = {
-    devices,
-    deviceData,
-    selectedDevice,
-    setSelectedDevice,
-    loading,
-    error,
-    fetchDevices,
-    fetchLatestData,
-    addDeviceData,
-    addDevice,
-    historyData,
-    fetchDeviceHistory,
+
+  // Fetch all devices
+  const fetchDevices = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/devices`);
+      setDevices(response.data);
+      
+      if (response.data.length > 0 && !selectedDevice) {
+        setSelectedDevice(response.data[0].deviceId);
+      }
+    } catch (err) {
+      console.error('Error fetching devices:', err);
+      setError('Failed to fetch devices');
+    } finally {
+      setLoading(false);
+    }
   };
-  
+
+  // Fetch latest data for all devices
+  const fetchLatestData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/data/latest`);
+      setDeviceData(response.data);
+    } catch (err) {
+      console.error('Error fetching latest data:', err);
+      // Don't set error state to avoid showing error toast every 5 seconds
+    }
+  };
+
+  // Fetch history data for a specific device
+  const fetchHistoryData = async (deviceId: string) => {
+    if (!deviceId) return;
+    
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/data/history/${deviceId}?limit=50`);
+      setHistoryData(response.data.reverse()); // Reverse to show oldest to newest
+    } catch (err) {
+      console.error('Error fetching history data:', err);
+      setHistoryData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add a new device
+  const addDevice = async (device: Omit<Device, '_id'>): Promise<boolean> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/devices`, device);
+      setDevices(prev => [...prev, response.data]);
+      
+      // If this is the first device, select it
+      if (!selectedDevice) {
+        setSelectedDevice(response.data.deviceId);
+      }
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error adding device:', err);
+      toast.error(err.response?.data?.message || 'Failed to add device');
+      return false;
+    }
+  };
+
+  // Add new device data
+  const addDeviceData = async (data: Partial<DeviceData>): Promise<boolean> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/data`, {
+        ...data,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Refresh latest data
+      fetchLatestData();
+      
+      // If this is for the selected device, refresh history as well
+      if (data.deviceId === selectedDevice) {
+        fetchHistoryData(selectedDevice);
+      }
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error adding device data:', err);
+      toast.error(err.response?.data?.message || 'Failed to add device data');
+      return false;
+    }
+  };
+
+  // Manual refresh function
+  const refreshData = async (): Promise<void> => {
+    await fetchDevices();
+    await fetchLatestData();
+    if (selectedDevice) {
+      await fetchHistoryData(selectedDevice);
+    }
+  };
+
   return (
-    <DeviceContext.Provider value={value}>
+    <DeviceContext.Provider
+      value={{
+        devices,
+        deviceData,
+        historyData,
+        selectedDevice,
+        loading,
+        error,
+        setSelectedDevice,
+        addDevice,
+        addDeviceData,
+        refreshData
+      }}
+    >
       {children}
     </DeviceContext.Provider>
   );
 };
 
-// Custom hook to use the device context
-export const useDeviceContext = (): DeviceContextProps => {
+export const useDeviceContext = () => {
   const context = useContext(DeviceContext);
-  
   if (context === undefined) {
     throw new Error('useDeviceContext must be used within a DeviceProvider');
   }
-  
   return context;
 };

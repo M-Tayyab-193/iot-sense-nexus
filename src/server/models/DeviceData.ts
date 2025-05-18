@@ -1,7 +1,20 @@
 
 import mongoose from 'mongoose';
 
-const DeviceDataSchema = new mongoose.Schema({
+export interface IDeviceData {
+  deviceId: string;
+  temperature?: number;
+  humidity?: number;
+  waterLevel?: number;
+  lightIntensity?: number;
+  motionDetected?: boolean;
+  batteryLevel?: number;
+  timestamp: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const DeviceDataSchema = new mongoose.Schema<IDeviceData>({
   deviceId: {
     type: String,
     required: true,
@@ -34,4 +47,4 @@ const DeviceDataSchema = new mongoose.Schema({
 // Index for faster queries by deviceId and timestamp
 DeviceDataSchema.index({ deviceId: 1, timestamp: -1 });
 
-export default mongoose.model('DeviceData', DeviceDataSchema);
+export default mongoose.model<IDeviceData>('DeviceData', DeviceDataSchema);

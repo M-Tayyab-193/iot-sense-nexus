@@ -1,41 +1,34 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { useDeviceContext } from '@/context/DeviceContext';
 import { toast } from 'sonner';
 
 const AdminDataForm: React.FC = () => {
   const { devices, addDeviceData } = useDeviceContext();
-  const [formData, setFormData] = useState({
-    deviceId: '',
-    temperature: 25,
-    humidity: 50,
-    waterLevel: 75,
-    lightIntensity: 800,
-    motionDetected: false,
-    batteryLevel: 90,
-  });
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  useEffect(() => {
-    // Set the first device as default if available
-    if (devices.length > 0 && !formData.deviceId) {
-      setFormData(prev => ({ ...prev, deviceId: devices[0].deviceId }));
-    }
-  }, [devices]);
+  const [formData, setFormData] = useState({
+    deviceId: '',
+    temperature: 22,
+    humidity: 50,
+    waterLevel: 75,
+    lightIntensity: 500,
+    motionDetected: false,
+    batteryLevel: 100
+  });
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSliderChange = (name: string, value: number[]) => {
+  const handleSliderChange = (name: string) => (value: number[]) => {
     setFormData(prev => ({ ...prev, [name]: value[0] }));
   };
   
@@ -55,11 +48,15 @@ const AdminDataForm: React.FC = () => {
       setIsSubmitting(true);
       const success = await addDeviceData({
         ...formData,
-        timestamp: new Date().toISOString()
+        temperature: Number(formData.temperature),
+        humidity: Number(formData.humidity),
+        waterLevel: Number(formData.waterLevel),
+        lightIntensity: Number(formData.lightIntensity),
+        batteryLevel: Number(formData.batteryLevel)
       });
       
       if (success) {
-        toast.success('Data submitted successfully');
+        toast.success('Device data submitted successfully');
       }
     } catch (error) {
       console.error('Error submitting data:', error);
@@ -68,149 +65,120 @@ const AdminDataForm: React.FC = () => {
     }
   };
   
-  const generateRandomData = () => {
-    setFormData(prev => ({
-      ...prev,
-      temperature: Math.round((Math.random() * 30 + 10) * 10) / 10, // 10-40°C
-      humidity: Math.round(Math.random() * 100), // 0-100%
-      waterLevel: Math.round(Math.random() * 100), // 0-100%
-      lightIntensity: Math.round(Math.random() * 1500 + 100), // 100-1600 lux
-      motionDetected: Math.random() > 0.5, // Random boolean
-      batteryLevel: Math.round(Math.random() * 40 + 60), // 60-100%
-    }));
-    
-    toast('Random data generated', {
-      description: 'You can now submit this data',
-    });
-  };
-  
   return (
-    <Card className="max-w-3xl mx-auto card-gradient animate-fade-in">
+    <Card className="card-gradient max-w-3xl mx-auto animate-fade-in">
       <CardHeader>
-        <CardTitle>Add Device Data</CardTitle>
+        <CardTitle>Submit Device Data</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="deviceId">Device</Label>
+            <Label htmlFor="deviceId">Device*</Label>
             <select
               id="deviceId"
               name="deviceId"
               value={formData.deviceId}
               onChange={handleChange}
-              className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2"
               required
+              className="w-full bg-muted/50 border border-input rounded-md h-9 px-3"
             >
-              <option value="">Select a device</option>
+              <option value="">Select a device...</option>
               {devices.map(device => (
                 <option key={device.deviceId} value={device.deviceId}>
-                  {device.name} ({device.location})
+                  {device.name} ({device.deviceId})
                 </option>
               ))}
             </select>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="temperature">Temperature (°C)</Label>
-                  <span className="text-sm font-medium">{formData.temperature}°C</span>
-                </div>
-                <Slider
-                  id="temperature"
-                  min={-10}
-                  max={50}
-                  step={0.5}
-                  value={[formData.temperature]}
-                  onValueChange={(value) => handleSliderChange('temperature', value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="humidity">Humidity (%)</Label>
-                  <span className="text-sm font-medium">{formData.humidity}%</span>
-                </div>
-                <Slider
-                  id="humidity"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={[formData.humidity]}
-                  onValueChange={(value) => handleSliderChange('humidity', value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="waterLevel">Water Level (%)</Label>
-                  <span className="text-sm font-medium">{formData.waterLevel}%</span>
-                </div>
-                <Slider
-                  id="waterLevel"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={[formData.waterLevel]}
-                  onValueChange={(value) => handleSliderChange('waterLevel', value)}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="lightIntensity">Light Intensity (lux)</Label>
-                  <span className="text-sm font-medium">{formData.lightIntensity} lux</span>
-                </div>
-                <Slider
-                  id="lightIntensity"
-                  min={0}
-                  max={2000}
-                  step={10}
-                  value={[formData.lightIntensity]}
-                  onValueChange={(value) => handleSliderChange('lightIntensity', value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="batteryLevel">Battery Level (%)</Label>
-                  <span className="text-sm font-medium">{formData.batteryLevel}%</span>
-                </div>
-                <Slider
-                  id="batteryLevel"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={[formData.batteryLevel]}
-                  onValueChange={(value) => handleSliderChange('batteryLevel', value)}
-                />
-              </div>
-              
-              <div className="flex items-center space-x-4 pt-4">
-                <Switch
-                  id="motionDetected"
-                  checked={formData.motionDetected}
-                  onCheckedChange={(checked) => handleSwitchChange('motionDetected', checked)}
-                />
-                <Label htmlFor="motionDetected">Motion Detected</Label>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="temperature">
+              Temperature: {formData.temperature}°C
+            </Label>
+            <Slider
+              id="temperature"
+              min={-10}
+              max={50}
+              step={0.1}
+              value={[formData.temperature]}
+              onValueChange={handleSliderChange('temperature')}
+              className="py-4"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="humidity">
+              Humidity: {formData.humidity}%
+            </Label>
+            <Slider
+              id="humidity"
+              min={0}
+              max={100}
+              step={1}
+              value={[formData.humidity]}
+              onValueChange={handleSliderChange('humidity')}
+              className="py-4"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="waterLevel">
+              Water Level: {formData.waterLevel}%
+            </Label>
+            <Slider
+              id="waterLevel"
+              min={0}
+              max={100}
+              step={1}
+              value={[formData.waterLevel]}
+              onValueChange={handleSliderChange('waterLevel')}
+              className="py-4"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="lightIntensity">
+              Light Intensity: {formData.lightIntensity} lux
+            </Label>
+            <Slider
+              id="lightIntensity"
+              min={0}
+              max={2000}
+              step={10}
+              value={[formData.lightIntensity]}
+              onValueChange={handleSliderChange('lightIntensity')}
+              className="py-4"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="batteryLevel">
+              Battery Level: {formData.batteryLevel}%
+            </Label>
+            <Slider
+              id="batteryLevel"
+              min={0}
+              max={100}
+              step={1}
+              value={[formData.batteryLevel]}
+              onValueChange={handleSliderChange('batteryLevel')}
+              className="py-4"
+            />
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <Switch
+              id="motionDetected"
+              checked={formData.motionDetected}
+              onCheckedChange={(checked) => handleSwitchChange('motionDetected', checked)}
+            />
+            <Label htmlFor="motionDetected">Motion Detected</Label>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={generateRandomData}
-          >
-            Generate Random Data
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || !formData.deviceId}
+        <CardFooter className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
             className="bg-iot-purple hover:bg-iot-purple/80"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Data'}

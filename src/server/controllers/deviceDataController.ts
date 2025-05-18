@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express';
-import DeviceData from '../models/DeviceData';
+import DeviceData, { IDeviceData } from '../models/DeviceData';
 import Device from '../models/Device';
 
 // Create new device data
